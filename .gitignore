@@ -1,3 +1,12 @@
+##
+## IntelliJ
+##
+.idea/
+*.iml
+
+##
+## Maven
+##
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -9,3 +18,9 @@ buildNumber.properties
 .mvn/timing.properties
 # https://github.com/takari/maven-wrapper#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
+
+##
+## Bot Project
+##
+run/__pycache__/
+tmp/
