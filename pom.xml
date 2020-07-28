@@ -1,100 +1,161 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-  <groupId>net.lambeaux.bots</groupId>
-  <artifactId>clojure-bot</artifactId>
-  <version>1.0-SNAPSHOT</version>
+	<groupId>net.lambeaux.bots</groupId>
+	<artifactId>clojure-bot</artifactId>
+	<version>1.0-SNAPSHOT</version>
 
-  <name>Clojure Bot</name>
+	<name>Clojure Bot</name>
+	<url>https://github.com/Lambeaux/Clojure-Bot</url>
 
-  <url>https://github.com/Lambeaux/Clojure-Bot</url>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<!-- Versions for project -->
+		<ver.java>1.8</ver.java>
+		<ver.rlbot.framework>2.0.0</ver.rlbot.framework>
+		<ver.junit>4.11</ver.junit>
+		<!-- Versions for build -->
+		<ver.maven.compiler-plugin>3.8.0</ver.maven.compiler-plugin>
+		<ver.maven.shade-plugin>3.2.4</ver.maven.shade-plugin>
+		<ver.maven.spotless-plugin>2.0.1</ver.maven.spotless-plugin>
+		<ver.maven.google-java-format>1.7</ver.maven.google-java-format>
+	</properties>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.rlbot.commons</groupId>
+			<artifactId>framework</artifactId>
+			<version>${ver.rlbot.framework}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${ver.junit}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
-  <repositories>
-    <repository>
-        <id>jcenter.bintray</id>
-        <name>bintray</name>
-        <url>https://jcenter.bintray.com</url>
-        <snapshots>
-            <enabled>false</enabled>
-        </snapshots>
-    </repository>
-  </repositories>
+	<repositories>
+		<repository>
+			<id>maven.central</id>
+			<name>central</name>
+			<url>https://repo1.maven.org/maven2/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>jcenter.bintray</id>
+			<name>bintray</name>
+			<url>https://jcenter.bintray.com</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>central</id>
+			<name>bintray-plugins</name>
+			<url>https://jcenter.bintray.com</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.rlbot.commons</groupId>
-      <artifactId>framework</artifactId>
-      <version>2.0.0</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
-  <pluginRepositories>
-    <pluginRepository>
-        <id>central</id>
-        <name>bintray-plugins</name>
-        <url>https://jcenter.bintray.com</url>
-        <snapshots>
-            <enabled>false</enabled>
-        </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-
-  <!-- Build notes
-  - Potentially viable alternative to shade plugin is combining
-  dependency and jar plugins for more packaging control.
-  - Other plugins: clean, resources, surefire, jar, install,
-  deploy, site, and project-info-reports.
-  -->
-  <build>
-    <plugins>
-      <!-- Compile -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-      <!-- Assemble -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.4</version>
-        <executions>
-            <execution>
-                <phase>package</phase>
-                <goals>
-                    <goal>shade</goal>
-                </goals>
-            </execution>
-        </executions>
-        <configuration>
-            <finalName>${artifactId}-${version}</finalName>
-            <transformers>
-              <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                <mainClass>net.lambeaux.bots.Main</mainClass>
-              </transformer>
-            </transformers>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+	<!-- Build notes - Potentially viable alternative to shade plugin is combining 
+		dependency and jar plugins for more packaging control. - Other plugins: clean, 
+		resources, surefire, jar, install, deploy, site, and project-info-reports. 
+		Look into tidy-maven-plugin later for semantic pom checking, defaults conflict 
+		with the Spotless defaults. -->
+	<build>
+		<plugins>
+			<!-- Compile -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${ver.maven.compiler-plugin}</version>
+				<configuration>
+					<source>${ver.java}</source>
+					<target>${ver.java}</target>
+				</configuration>
+			</plugin>
+			<!-- Assemble -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>${ver.maven.shade-plugin}</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<finalName>${project.artifactId}-${project.version}-final</finalName>
+					<transformers>
+						<transformer
+							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+							<mainClass>net.lambeaux.bots.Main</mainClass>
+						</transformer>
+					</transformers>
+				</configuration>
+			</plugin>
+			<!-- Format Java & XML -->
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>${ver.maven.spotless-plugin}</version>
+				<executions>
+					<execution>
+						<id>spotless-check</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<formats>
+						<format>
+							<includes>
+								<include>*.md</include>
+								<include>.gitignore</include>
+							</includes>
+							<trimTrailingWhitespace />
+							<endWithNewline />
+							<indent>
+								<spaces>true</spaces>
+								<spacesPerTab>2</spacesPerTab>
+							</indent>
+						</format>
+						<format>
+							<includes>
+								<include>*.xml</include>
+							</includes>
+							<eclipseWtp>
+								<type>XML</type>
+							</eclipseWtp>
+						</format>
+					</formats>
+					<java>
+						<googleJavaFormat>
+							<version>${ver.maven.google-java-format}</version>
+							<style>GOOGLE</style>
+						</googleJavaFormat>
+					</java>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
