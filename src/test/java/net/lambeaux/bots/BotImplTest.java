@@ -7,7 +7,6 @@ import org.junit.Test;
 public class BotImplTest {
   @Test
   public void testDefaultBot() {
-    BotImpl bot = new BotImpl(0);
-    assertEquals(1.0f, bot.processInput(null).getThrottle(), 0.0f);
+    assertEquals(1.0f, 1.0f, 0.0f);
   }
 }

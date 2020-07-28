@@ -8,6 +8,7 @@
 	<groupId>net.lambeaux.bots</groupId>
 	<artifactId>clojure-bot</artifactId>
 	<version>1.0-SNAPSHOT</version>
+	<packaging>clojure</packaging>
 
 	<name>Clojure Bot</name>
 	<url>https://github.com/Lambeaux/Clojure-Bot</url>
@@ -17,12 +18,13 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 		<!-- Versions for project -->
-		<ver.java>1.8</ver.java>
+		<ver.clojure.lang>1.10.1</ver.clojure.lang>
+		<ver.clojure.nrepl>0.7.0</ver.clojure.nrepl>
 		<ver.rlbot.framework>2.0.0</ver.rlbot.framework>
 		<ver.junit>4.11</ver.junit>
 		<!-- Versions for build -->
-		<ver.maven.compiler-plugin>3.8.0</ver.maven.compiler-plugin>
-		<ver.maven.shade-plugin>3.2.4</ver.maven.shade-plugin>
+		<ver.maven.clojure-plugin>1.8.4</ver.maven.clojure-plugin>
+		<ver.maven.assembly-plugin>3.3.0</ver.maven.assembly-plugin>
 		<ver.maven.spotless-plugin>2.0.1</ver.maven.spotless-plugin>
 		<ver.maven.google-java-format>1.7</ver.maven.google-java-format>
 	</properties>
@@ -32,7 +34,16 @@
 			<groupId>org.rlbot.commons</groupId>
 			<artifactId>framework</artifactId>
 			<version>${ver.rlbot.framework}</version>
-			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.clojure</groupId>
+			<artifactId>clojure</artifactId>
+			<version>${ver.clojure.lang}</version>
+		</dependency>
+		<dependency>
+			<groupId>nrepl</groupId>
+			<artifactId>nrepl</artifactId>
+			<version>${ver.clojure.nrepl}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -47,6 +58,14 @@
 			<id>maven.central</id>
 			<name>central</name>
 			<url>https://repo1.maven.org/maven2/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>clojars.org</id>
+			<name>clojars</name>
+			<url>https://repo.clojars.org</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
@@ -80,36 +99,53 @@
 		<plugins>
 			<!-- Compile -->
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>${ver.maven.compiler-plugin}</version>
+				<groupId>com.theoryinpractise</groupId>
+				<artifactId>clojure-maven-plugin</artifactId>
+				<version>${ver.maven.clojure-plugin}</version>
+				<extensions>true</extensions>
 				<configuration>
-					<source>${ver.java}</source>
-					<target>${ver.java}</target>
+					<sourceDirectories>
+						<sourceDirectory>src/main/clojure</sourceDirectory>
+					</sourceDirectories>
+					<testSourceDirectories>
+						<testSourceDirectory>src/test/clojure</testSourceDirectory>
+					</testSourceDirectories>
+					<!-- Do not AOT everything - only bot namespaces we need to verify -->
+					<compileDeclaredNamespaceOnly>true</compileDeclaredNamespaceOnly>
+					<namespaces>
+						<namespace>net.lambeaux.bots.*</namespace>
+					</namespaces>
+					<!-- Take advantage of Clojure syntax checking without actually packaging 
+						AOT classes. -->
+					<temporaryOutputDirectory>true</temporaryOutputDirectory>
 				</configuration>
 			</plugin>
 			<!-- Assemble -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>${ver.maven.shade-plugin}</version>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>${ver.maven.assembly-plugin}</version>
 				<executions>
 					<execution>
+						<id>make-jar</id>
 						<phase>package</phase>
 						<goals>
-							<goal>shade</goal>
+							<goal>single</goal>
 						</goals>
+						<configuration>
+							<archive>
+								<manifest>
+									<mainClass>net.lambeaux.bots.Main</mainClass>
+								</manifest>
+							</archive>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<finalName>${project.artifactId}-${project.version}-final</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+						</configuration>
 					</execution>
 				</executions>
-				<configuration>
-					<finalName>${project.artifactId}-${project.version}-final</finalName>
-					<transformers>
-						<transformer
-							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-							<mainClass>net.lambeaux.bots.Main</mainClass>
-						</transformer>
-					</transformers>
-				</configuration>
 			</plugin>
 			<!-- Format Java & XML -->
 			<plugin>
