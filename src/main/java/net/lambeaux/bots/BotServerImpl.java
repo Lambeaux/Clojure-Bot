@@ -11,10 +11,10 @@ public class BotServerImpl extends SocketServer {
 
   static {
     IFn require = Clojure.var("clojure.core", "require");
-    require.invoke(Clojure.read("net.lambeaux.bots.control"));
+    require.invoke(Clojure.read("net.lambeaux.bots.core"));
   }
 
-  private static final IFn BOT_FACTORY = Clojure.var("net.lambeaux.bots.control", "create-bot");
+  private static final IFn BOT_FACTORY = Clojure.var("net.lambeaux.bots.core", "create-bot");
 
   public BotServerImpl(int port, BotManager botManager) {
     super(port, botManager);
