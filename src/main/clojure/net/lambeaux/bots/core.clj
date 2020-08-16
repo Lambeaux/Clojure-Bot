@@ -1,6 +1,7 @@
 (ns net.lambeaux.bots.core
   "The primary bot namespace for wiring everything together."
-  (:require [clojure.pprint :as pretty])
+  (:require [clojure.pprint :as pretty]
+            [net.lambeaux.bots.math :as mat])
   (:import (rlbot ControllerState Bot)
            (rlbot.manager BotLoopRenderer)
            (rlbot.flat GameTickPacket Rotator PlayerInfo BoxShape ScoreInfo Physics Touch BoostPadState TeamInfo)
@@ -16,112 +17,6 @@
 (def last-game-packet-capture (atom nil))
 (def last-game-map-capture (atom nil))
 (def bot-model-state (atom nil))
-
-;; ----------------------------------------------------------------------
-;; ### Math
-;;
-;; Building blocks of 3D vector math.
-;;
-
-(comment
-  "Be cautious about plugging into these formulae and expecting correct answers,
-  especially when programming in C or Java. Math libraries for a programming language
-  can do unexpected things if you are not careful. There are three places to be
-  especially cautious:
-  - The argument for sin(), cos(), tan() is expected in radians.
-  - The return value of atan() is in radians.
-  - The argument for most math functions is expected to be a double.
-    In C, if you supply a float or an int, you won't get a error message,
-    just a horribly incorrect answer.
-  - There are several versions of 'arc tan' in most C libraries, each for a different range of output values.")
-
-(defn- sum
-  "Adds two vectors together."
-  [v1 v2]
-  [(+ (first v1) (first v2)) (+ (second v1) (second v2))])
-
-(defn- sub
-  "Subtracts v2 from v1."
-  [v1 v2]
-  [(- (first v1) (first v2)) (- (second v1) (second v2))])
-
-(defn- mag
-  "Returns the magnitude of a vector."
-  [v]
-  (Math/sqrt (+ (Math/pow (first v) 2) (Math/pow (second v) 2))))
-
-(defn- dir
-  "Returns the direction of a vector in positive degrees between 0 and 360."
-  [v]
-  (let [rel-deg (Math/toDegrees (Math/atan2 (second v) (first v)))]
-    (if (< rel-deg 0) (+ rel-deg 360) rel-deg)))
-
-(defn- norm
-  "Returns a unit vector pointing in the same direction as the input vector."
-  [v]
-  (let [m (mag v)] [(/ (first v) m) (/ (second v) m)]))
-
-(defn- dot
-  "Returns the dot product of two vectors."
-  ([v1 v2]
-   (dot (mag v1) (mag v2) (dir v1) (dir v2)))
-  ([mag1 mag2 angle1 angle2]
-   (dot mag1 mag2 (Math/abs ^Double (- angle1 angle2))))
-  ([mag1 mag2 theta]
-   (* mag1 mag2 (Math/cos (Math/toRadians theta)))))
-
-(defn- parts
-  "Returns the component vector of a magnitude and direction."
-  [mag dir]
-  [(* mag (Math/cos (Math/toRadians dir))) (* mag (Math/sin (Math/toRadians dir)))])
-
-(defn- matrix-dot
-  "An implementation of dot product according to the rules of column matrices."
-  [v1 v2]
-  (+ (* (first v1) (first v2)) (* (second v1) (second v2))))
-
-(comment
-  ;;
-  ;; Basics
-  (sum [1.0 1.0] [2.0 3.0])
-  (sub [5.0 5.0] [3.0 4.0])
-  (mag [1.0 1.0])
-  (dir [1.0 1.0])
-  (parts (mag [1.0 1.0]) (dir [1.0 1.0]))
-  ;;
-  ;; Unit vectors
-  (norm [1.0 1.0])
-  (mag (norm [1.0 1.0]))
-  ;;
-  ;; Dot product
-  (dot [-2.0 -20.0] [5.0 2.0])
-  (dot (mag [-2.0 -20.0]) (mag [5.0 2.0]) (dir [-2.0 -20.0]) (dir [5.0 2.0]))
-  (dot (mag [-2.0 -20.0]) (mag [5.0 2.0]) (Math/abs (- (dir [-2.0 -20.0]) (dir [5.0 2.0]))))
-  (matrix-dot [-2.0 -20.0] [5.0 2.0])
-  ;;
-  ;; Dot product - reverse relationship / verification
-  (* 20.1 5.38 (Math/cos (Math/toRadians 117.512)))
-  (Math/toDegrees
-    (Math/acos
-      (/ -50.0 (* (mag [-2.0 -20.0])
-                  (mag [5.0 2.0])))))
-  ;;
-  ;; Dot product - fix decimal precision (result should be zero)
-  (dot [1.0 1.0] [-1.0 1.0])
-  (dot [-1.0 1.0] [1.0 1.0])
-  (float (dot [1.0 1.0] [-1.0 1.0]))
-  (float (dot [-1.0 1.0] [1.0 1.0]))
-  ;;
-  ;; Issues
-  (dot (mag [1.0 1.0]) (mag [-1.0 1.0]) (- (dir [1.0 1.0]) (dir [-1.0 1.0])))
-  (Math/toRadians -90.0)
-  (/ (Math/PI))
-  (Math/cos (Math/toRadians 0))
-  (Math/toRadians 45)
-  ;;
-  ;; Other
-  (Math/toDegrees (Math/atan2 1.0 1.0))
-  (Math/toDegrees (Math/atan 1.0)))
 
 ;; ----------------------------------------------------------------------
 ;; ### Adapters
@@ -309,7 +204,7 @@
   [game-map throttle]
   (let [ball-location (get-in game-map [:ball-physics :location])
         player-location (get-in game-map [:player-me :physics :location])
-        car-to-ball (sub ball-location player-location)
+        car-to-ball (mat/vsum ball-location (mat/vneg player-location))
         car-direction (nose-vector game-map)
         correction (correction-angle car-direction car-to-ball)]
     {:control-maps (list (conj default-input
@@ -415,12 +310,7 @@
   (let [player-location (get-in game-map [:player-me :physics :location])]
     (draw-line! Color/CYAN
                 player-location
-                ;; Swap this repeat & reduce method out for a vector scaling approach
-                (->> game-map
-                     nose-vector
-                     (repeat 150)
-                     (into (list player-location))
-                     (reduce sum)))))
+                (->> game-map nose-vector (mat/vscale 200) (mat/vsum player-location)))))
 
 (defn- draw-game-map-text! [game-map]
   (draw-rect!
